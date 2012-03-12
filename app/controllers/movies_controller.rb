@@ -8,17 +8,30 @@ class MoviesController < ApplicationController
 
   def index
     @all_ratings = Movie.select("distinct rating").map {|m| m.rating }
-    @selected_ratings = params[:ratings] ? params[:ratings].keys : []
-    if params[:sort]
+    @selected_ratings = params[:ratings] || session[:ratings] || {}
+    sorting = params[:sort] || session[:sort] || nil
+    
+    if params[:sort] != session[:sort]
+      session[:sort] = sorting
+      redirect_to :sort => sorting, :ratings => @selected_ratings and return
+    end
+
+    if params[:ratings] != session[:ratings] and @selected_ratings != {}
+      session[:sort] = sorting
+      session[:ratings] = @selected_ratings
+      redirect_to :sort => sorting, :ratings => @selected_ratings and return
+    end
+    
+    if sorting
       unless @selected_ratings.empty?
-        @movies = Movie.where(:rating => @selected_ratings).order(params[:sort])
+        @movies = Movie.where(:rating => @selected_ratings.keys).order(sorting)
       else
-        @movies = Movie.all(:order => params[:sort])
+        @movies = Movie.all(:order => sorting)
       end
-      @hilite = params[:sort]
+      @hilite = sorting
     else
       unless @selected_ratings.empty?
-        @movies = Movie.where(:rating => @selected_ratings)
+        @movies = Movie.where(:rating => @selected_ratings.keys)
       else
         @movies = Movie.all
       end
