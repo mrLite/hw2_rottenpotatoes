@@ -7,11 +7,21 @@ class MoviesController < ApplicationController
   end
 
   def index
+    @all_ratings = Movie.select("distinct rating").map {|m| m.rating }
+    @selected_ratings = params[:ratings] ? params[:ratings].keys : []
     if params[:sort]
-      @movies = Movie.all(:order => params[:sort])
+      unless @selected_ratings.empty?
+        @movies = Movie.where(:rating => @selected_ratings).order(params[:sort])
+      else
+        @movies = Movie.all(:order => params[:sort])
+      end
       @hilite = params[:sort]
     else
-      @movies = Movie.all
+      unless @selected_ratings.empty?
+        @movies = Movie.where(:rating => @selected_ratings)
+      else
+        @movies = Movie.all
+      end
     end
   end
 
